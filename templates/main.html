@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<title>STIB-SMS</title>
+<h1>Response</h1>
+<h3>Stop: {{stop}}</h3>
+
+{% for stop in payload.points %}
+
+Stop ID: {{stop.pointId}}
+<br/>
+{% for vehicle in stop.passingTimes %}
+<p>Line {{vehicle.lineId}} is coming in {{vehicle.expectedArrivalTime}}</p>
+{% endfor %}
+
+
+{% endfor %}
