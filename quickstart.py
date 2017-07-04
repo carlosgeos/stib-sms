@@ -14,6 +14,8 @@ token = os.environ['ACCESS_TOKEN']
 client_key = os.environ['CLIENT_KEY']
 client_secret = os.environ['CLIENT_SECRET']
 
+STIB_API_ADDR = "https://opendata-api.stib-mivb.be"
+
 
 def setup_app():
     """Read all the stops information from the local GTFS file.
@@ -27,39 +29,37 @@ def setup_app():
     example, Petillon stop has one for tram and one for metro.
 
     """
-    stops_ids = {}              # Dict containing all the info about
-                                # the stops. Key is Stop ID
+    # Dict containing all the info about the stops. Key is Stop ID
+    stops_ids = {}
 
-    stops_ids_by_name = defaultdict(list) # Read docstring
+    stops_ids_by_name = defaultdict(list)  # Read docstring
 
     with open('data/stops.csv') as stopsfile:
         reader = csv.DictReader(stopsfile)
-        stops_ids = {row['stop_id']:{
-            'stop_name':row['stop_name'],
-            'stop_lat':row['stop_lat'].strip(),
-            'stop_lon':row['stop_lon'].strip(),
-            'location_type':row['location_type']} for row in reader}
+        stops_ids = {row['stop_id']: {
+            'stop_name': row['stop_name'],
+            'stop_lat': row['stop_lat'].strip(),
+            'stop_lon': row['stop_lon'].strip(),
+            'location_type': row['location_type']} for row in reader}
 
         for key, stop_dict in stops_ids.items():
             stops_ids_by_name[stop_dict['stop_name']].append(key)
 
     return stops_ids_by_name
 
+
 stops = setup_app()
 
-# After updating the token you will most likely want to save it.
-def token_saver(token):
-    # save token in database / session
-    print(token)
 
 def get_token():
     """Gets a token from the token refresh endpoint
     """
-    request_token_url = 'https://opendata-api.stib-mivb.be/token'
+    request_token_url = STIB_API_ADDR + '/token'
     # Base64 encode requires ASCII and we decode to utf8 afterwards
     # since the header must take a string and not ASCII byte literals
-    base64_credentials = base64.b64encode((client_key + ":" + client_secret).encode('ascii')).decode("utf-8")
-    print(base64_credentials)
+    base64_credentials = base64.b64encode((client_key + ":" + client_secret)
+                                          .encode('ascii')).decode("utf-8")
+
     headers = {"Authorization": "Basic " + base64_credentials}
     data = "grant_type=client_credentials"
 
@@ -69,11 +69,12 @@ def get_token():
     token = json_ob['access_token']
     return token
 
+
 def get_time(stop, token):
 
-    ids = "%2C".join(stops[stop]) # %2C is a comma
+    ids = "%2C".join(stops[stop])  # %2C is a comma
 
-    get_time_url = 'https://opendata-api.stib-mivb.be/OperationMonitoring/1.0/PassingTimeByPoint/' + ids
+    get_time_url = STIB_API_ADDR + '/OperationMonitoring/1.0/PassingTimeByPoint/' + ids
 
     headers = {
         "Authorization": "Bearer " + token,
@@ -82,6 +83,7 @@ def get_time(stop, token):
 
     r = requests.get(get_time_url, headers=headers)
     return r
+
 
 @app.route('/')
 def hello_world():
@@ -94,7 +96,6 @@ def hello_world():
             now = int(datetime.strftime(datetime.now(), "%-M"))
             expected = int(datetime.strftime(datetime.strptime(vehicle['expectedArrivalTime'], "%Y-%m-%dT%H:%M:%S"), "%-M"))
 
-            vehicle['expectedArrivalTime'] = expected - now # This is all broken. If time is 16:59 for example and expected is 17:01 it wont work.
-
+            vehicle['expectedArrivalTime'] = expected - now  # This is all broken. If time is 16:59 for example and expected is 17:01 it wont work.
 
     return render_template("main.html", stop=stop, payload=res)
