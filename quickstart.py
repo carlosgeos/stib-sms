@@ -7,7 +7,6 @@ from stib import StibService
 
 app = Flask(__name__)
 stib_service = StibService()
-gmail_service = GmailService()
 logging.basicConfig(level=logging.DEBUG)
 
 
@@ -17,6 +16,8 @@ def web_interface():
     purpose of the project. Mainly there to accept Gmail's OAuth2.
 
     """
+    gmail_service = GmailService()
+
     stop = request.args.get('stop')
     if stop:
         stop = stop.upper()
@@ -54,8 +55,8 @@ def check_times():
     line_numbers = sms_content['sms_body'].split(' ')
     network_info = stib_service.get_line(*line_numbers)
 
-    message = gmail_service.create_message(message_text=network_info)
-    gmail_service.send_message(user_id="me", message=message)
+    # message = gmail_service.create_message(message_text=network_info)
+    # gmail_service.send_message(user_id="me", message=message)
 
     return jsonify(
         status="OK"
