@@ -3,13 +3,14 @@
 <h1>Response</h1>
 <h3>Stop: {{stop}}</h3>
 
-{% for stop in payload.points %}
+{% if payload.points is not none %}
 
+{% for stop in payload.points %}
 Stop ID: {{stop.pointId}}
 <br/>
 {% for vehicle in stop.passingTimes %}
 <p>Line {{vehicle.lineId}} is coming in {{vehicle.expectedArrivalTime}}</p>
 {% endfor %}
-
-
 {% endfor %}
+
+{% endif %}
